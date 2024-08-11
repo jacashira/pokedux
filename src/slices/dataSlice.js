@@ -1,31 +1,46 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { getPokemon, getPokemonDetails } from '../api';
+import { setLoading } from './uiSlice';
 
 const initialState = {
-    pokemons: [],
-}
+  pokemons: [],
+};
+
+export const fetchPokemonsWithDetails = createAsyncThunk(
+  'data/fetchPokemonsWithDetails',
+  async (_, { dispatch }) => {
+    dispatch(setLoading(true));
+    const pokemonsRes = await getPokemon();
+    const pokemonsDetailed = await Promise.all(
+      pokemonsRes.map((pokemon) => getPokemonDetails(pokemon))
+    );
+    dispatch(setPokemons(pokemonsDetailed));
+    dispatch(setLoading(false));
+  }
+);
 
 export const dataSlice = createSlice({
-    name: 'data',
-    initialState,
-    reducers: {
-        setPokemons: (state, action) => {
-            state.pokemons = action.payload
-        },
-        setFavorite: (state, action) => {
-            const currentPokemonIndex = state.pokemons.findIndex((pokemon) => {
-                return pokemon.id === action.payload.pokemonId;
-              });
-        
-              if (currentPokemonIndex >= 0) {
-                const isFavorite = state.pokemons[currentPokemonIndex].isFavorite
+  name: 'data',
+  initialState,
+  reducers: {
+    setPokemons: (state, action) => {
+      state.pokemons = action.payload;
+    },
+    setFavorite: (state, action) => {
+      const currentPokemonIndex = state.pokemons.findIndex((pokemon) => {
+        return pokemon.id === action.payload.pokemonId;
+      });
 
-                state.pokemons[currentPokemonIndex].favorite = !isFavorite
-              }
-        }
-    }
-})
+      if (currentPokemonIndex >= 0) {
+        const isFavorite = state.pokemons[currentPokemonIndex].favorite;
 
-export const { setPokemons, setFavorite } = dataSlice.actions
-console.log("🚀 ~ file: dataSlice:", dataSlice)
+        state.pokemons[currentPokemonIndex].favorite = !isFavorite;
+      }
+    },
+  },
+});
 
-export default dataSlice.reducer
+export const { setFavorite, setPokemons } = dataSlice.actions;
+console.log('🚀 ~ file: dataSlice.js ~ line 29 ~ dataSlice', dataSlice);
+
+export default dataSlice.reducer;
